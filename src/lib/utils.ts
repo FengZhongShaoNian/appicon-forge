@@ -163,23 +163,38 @@ export const scaleShadow = (shadow: Shadow, scale: number) => {
   ] satisfies Shadow
 }
 
-export const downloadImage = (
+export const downloadImage = async (
   imageSize: number,
   fileName: string,
   element?: HTMLElement | null,
 ) => {
-  if (element) {
-    toPng(element, {
-      canvasHeight: imageSize,
-      canvasWidth: imageSize,
-      pixelRatio: 1,
-    }).then((dataUrl) => {
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = fileName
-      a.click()
-    })
-  }
+  if (!element) return
+
+  const dataUrl = await toPng(element, {
+    canvasHeight: imageSize,
+    canvasWidth: imageSize,
+    pixelRatio: 1,
+  })
+
+  const a = document.createElement('a')
+  a.href = dataUrl
+  a.download = fileName
+  a.click()
+}
+
+export const downloadSvg = (svg: string, fileName: string) => {
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+
+  // Keep the URL alive long enough for the browser to start the download.
+  setTimeout(() => {
+    URL.revokeObjectURL(url)
+  }, 1000)
 }
 
 export const detectFontAvailability = (font: string) => {

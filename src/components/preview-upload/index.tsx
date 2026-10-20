@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
 
 import { IconCard } from '@/components/icon-card'
-import { downloadImage } from '@/lib/utils'
-import { useStore } from '@/store'
+import { useIconDownload } from '@/lib/use-icon-download'
 
 import { DownloadButton } from '../download-button'
 import { Input } from '../ui/input'
@@ -10,8 +9,8 @@ import { Separator } from '../ui/separator'
 import { PreviewContainer } from '../ui/styled'
 
 export const PreviewUpload = () => {
-  const [{ imageSize }] = useStore((store) => store.componentsState)
   const iconCardRef = useRef<HTMLDivElement>(null)
+  const downloadIcon = useIconDownload()
   const [uploadedContent, setUploadedContent] = useState<string>('')
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +65,12 @@ export const PreviewUpload = () => {
       />
       <DownloadButton
         onClick={() => {
-          downloadImage(imageSize, `upload.png`, iconCardRef.current)
+          void downloadIcon({
+            element: iconCardRef.current,
+            fileName: 'upload',
+            previewType: 'upload',
+            uploadContent: uploadedContent,
+          })
         }}
       />
     </PreviewContainer>

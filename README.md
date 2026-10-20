@@ -19,12 +19,14 @@ A simple tool that allows you to generate usable app icons without any design ex
 - Customize local SVG files or images.
 - Generate icons using [Iconify Icons](https://iconify.design/) with over 200,000 available icons.
 - Real-time preview of your icon changes.
-- Easy export of icons for apps.
+- Export icons as PNG or SVG. SVG exports keep shapes and gradients as vectors.
 
 > [!IMPORTANT]
 > The text icons use the system's default fonts, and copyright compliance cannot be guaranteed. Please proceed with caution when making your selection.
 >
 > You can use custom Google fonts to avoid this.
+>
+> Custom fonts are not embedded in SVG exports, so install the font (or use a system font) when opening the exported SVG elsewhere. Conic gradients are rasterized and perspective effects use CSS 3D transforms, which need a renderer that supports them.
 
 ## Usage
 

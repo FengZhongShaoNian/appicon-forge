@@ -4,7 +4,10 @@ export const zh = {
     'border settings': '边框设置',
     'data text': '预设分享码',
     download: '下载',
+    'download error': '导出图标失败，请重试。',
+    'download png': '下载 PNG',
     'download settings': '下载设置',
+    'download svg': '下载 SVG',
     'export data': '导出预设',
     'go to collection': '集合',
     'icon name': '名称',
@@ -48,8 +51,11 @@ export const zh = {
         },
       },
       download: {
+        format: '格式',
         padding: '包含内边距',
+        png: 'PNG',
         size: '图片大小',
+        svg: 'SVG（矢量）',
       },
       gradient: {
         conic: '圆锥',

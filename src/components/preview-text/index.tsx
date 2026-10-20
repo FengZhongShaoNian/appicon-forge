@@ -1,17 +1,15 @@
 import { useRef } from 'react'
 
 import { Separator } from '@/components/ui/separator'
-import { downloadImage } from '@/lib/utils'
-import { useStore } from '@/store'
+import { useIconDownload } from '@/lib/use-icon-download'
 
 import { DownloadButton } from '../download-button'
 import { IconCard } from '../icon-card'
 import { PreviewContainer } from '../ui/styled'
 
 export const PreviewText = () => {
-  const [{ imageSize }] = useStore((store) => store.componentsState)
-
   const iconCardRef = useRef<HTMLDivElement>(null)
+  const downloadIcon = useIconDownload()
 
   return (
     <PreviewContainer>
@@ -19,7 +17,11 @@ export const PreviewText = () => {
       <IconCard ref={iconCardRef} inPreview previewType='text' />
       <DownloadButton
         onClick={() => {
-          downloadImage(imageSize, `text.png`, iconCardRef.current)
+          void downloadIcon({
+            element: iconCardRef.current,
+            fileName: 'text',
+            previewType: 'text',
+          })
         }}
       />
     </PreviewContainer>

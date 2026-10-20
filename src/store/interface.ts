@@ -1,6 +1,6 @@
 import type { APIv2Collection } from '@/services/iconify'
 
-import type { Gradient, Settings, Tab } from './constants'
+import type { Gradient, ImageFormat, Settings, Tab } from './constants'
 
 export interface Color {
   id: string
@@ -71,6 +71,7 @@ export interface PreviewIcon {
 }
 
 export interface ComponentsState {
+  imageFormat: ImageFormat
   // Image Size -> only works in preview
   imageSize: number
   isSeparateBorderRadius: boolean

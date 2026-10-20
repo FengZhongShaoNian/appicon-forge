@@ -4,7 +4,10 @@ export const en = {
     'border settings': 'Border Settings',
     'data text': 'Preset sharing code',
     download: 'Download',
+    'download error': 'Failed to export the icon, please try again.',
+    'download png': 'Download PNG',
     'download settings': 'Download Settings',
+    'download svg': 'Download SVG',
     'export data': 'Export Presets',
     'go to collection': 'Collection',
     'icon name': 'Name',
@@ -48,8 +51,11 @@ export const en = {
         },
       },
       download: {
+        format: 'Format',
         padding: 'Include Padding',
+        png: 'PNG',
         size: 'Image Size',
+        svg: 'SVG (Vector)',
       },
       gradient: {
         conic: 'Conic',

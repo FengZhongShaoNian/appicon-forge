@@ -4,7 +4,7 @@ import { CircleArrowOutUpLeftIcon, XIcon } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
-import { downloadImage } from '@/lib/utils'
+import { useIconDownload } from '@/lib/use-icon-download'
 import { useStore } from '@/store'
 import { Settings } from '@/store/constants'
 
@@ -16,10 +16,12 @@ import { Button } from '../ui/button'
 export const PreviewDialog = () => {
   const { t } = useTranslation()
 
-  const [{ imageSize, previewIcon, searchQuery }, setComponentsState] =
-    useStore((store) => store.componentsState)
+  const [{ previewIcon, searchQuery }, setComponentsState] = useStore(
+    (store) => store.componentsState,
+  )
 
   const iconCardRef = useRef<HTMLDivElement>(null)
+  const downloadIcon = useIconDownload()
 
   const closePreview = () => {
     setComponentsState((draft) => {
@@ -104,11 +106,12 @@ export const PreviewDialog = () => {
               )}
               <DownloadButton
                 onClick={() => {
-                  downloadImage(
-                    imageSize,
-                    `${previewIcon.name}.png`,
-                    iconCardRef.current,
-                  )
+                  void downloadIcon({
+                    element: iconCardRef.current,
+                    fileName: previewIcon.name,
+                    iconName: previewIcon.name,
+                    previewType: 'icon',
+                  })
                 }}
               />
             </div>
