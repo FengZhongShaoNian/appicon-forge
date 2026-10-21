@@ -8,6 +8,7 @@ import { useIconDownload } from '@/lib/use-icon-download'
 import { useStore } from '@/store'
 import { Settings } from '@/store/constants'
 
+import { CompareIconButton } from '../compare-icon'
 import { DownloadButton } from '../download-button'
 import { IconCard } from '../icon-card'
 import { ThemeToggle } from '../theme-toggle'
@@ -90,7 +91,7 @@ export const PreviewDialog = () => {
                 </a>
               </p>
             </div>
-            <div className='flex gap-4'>
+            <div className='flex flex-wrap justify-center gap-4'>
               {isOpenFromSearch && (
                 <Button
                   size='lg'
@@ -113,6 +114,10 @@ export const PreviewDialog = () => {
                     previewType: 'icon',
                   })
                 }}
+              />
+              <CompareIconButton
+                iconName={previewIcon.name}
+                previewType='icon'
               />
             </div>
           </div>

@@ -1,11 +1,7 @@
 import { buildIcon, loadIcon, replaceIDs } from '@iconify/react'
 
-import {
-  LIST_ICON_SIZE,
-  PREVIEW_ICON_PADDING,
-  PREVIEW_ICON_SIZE,
-} from '@/constants/icon-size'
-import { scaleShadow } from '@/lib/utils'
+import { LIST_ICON_SIZE, PREVIEW_ICON_SIZE } from '@/constants/icon-size'
+import { getIconPaddingValues, scaleShadow } from '@/lib/utils'
 import { Gradient } from '@/store/constants'
 
 import type { BorderRadius, Color, Shadow, Styles } from '@/store/interface'
@@ -63,11 +59,18 @@ const createGradientStops = (colors: string[]) =>
     })
     .join('')
 
+interface FillBox {
+  height: number
+  width: number
+  x: number
+  y: number
+}
+
 const createLinearGradient = (
   id: string,
   colors: string[],
   rotation: number,
-  box?: { height: number; width: number },
+  box?: FillBox,
 ) => {
   const radians = (rotation * Math.PI) / 180
   const x = Math.sin(radians)
@@ -82,8 +85,8 @@ const createLinearGradient = (
     // For non-square boxes, the gradient line length has to take the box
     // dimensions into account, otherwise the exported angle would not match
     // the CSS gradient used by the preview.
-    const centerX = VIEW_BOX_SIZE / 2
-    const centerY = VIEW_BOX_SIZE / 2
+    const centerX = box.x + box.width / 2
+    const centerY = box.y + box.height / 2
     const length = Math.abs(box.width * x) + Math.abs(box.height * y)
     x1 = centerX - (x * length) / 2
     y1 = centerY - (y * length) / 2
@@ -102,17 +105,14 @@ const createLinearGradient = (
   return `<linearGradient id="${id}" x1="${formatNumber(x1)}" x2="${formatNumber(x2)}" y1="${formatNumber(y1)}" y2="${formatNumber(y2)}"${box ? ' gradientUnits="userSpaceOnUse"' : ''}>${createGradientStops(colors)}</linearGradient>`
 }
 
-const createRadialGradient = (
-  id: string,
-  colors: string[],
-  box?: { height: number; width: number },
-) => {
+const createRadialGradient = (id: string, colors: string[], box?: FillBox) => {
   if (!box) {
     return `<radialGradient cx="0.5" cy="0.5" id="${id}" r="0.7071">${createGradientStops(colors)}</radialGradient>`
   }
 
-  const center = VIEW_BOX_SIZE / 2
-  return `<radialGradient cx="${center}" cy="${center}" gradientTransform="translate(${center} ${center}) scale(${formatNumber(box.width)} ${formatNumber(box.height)}) translate(${-center} ${-center})" gradientUnits="userSpaceOnUse" id="${id}" r="0.7071">${createGradientStops(colors)}</radialGradient>`
+  const centerX = box.x + box.width / 2
+  const centerY = box.y + box.height / 2
+  return `<radialGradient cx="${formatNumber(centerX)}" cy="${formatNumber(centerY)}" gradientTransform="translate(${formatNumber(centerX)} ${formatNumber(centerY)}) scale(${formatNumber(box.width)} ${formatNumber(box.height)}) translate(${formatNumber(-centerX)} ${formatNumber(-centerY)})" gradientUnits="userSpaceOnUse" id="${id}" r="0.7071">${createGradientStops(colors)}</radialGradient>`
 }
 
 const createVectorGradient = (
@@ -120,7 +120,7 @@ const createVectorGradient = (
   colors: string[],
   gradient: Gradient,
   rotation: number,
-  box?: { height: number; width: number },
+  box?: FillBox,
 ): { defs: string; fill: string } => ({
   fill: `url(#${id})`,
   defs:
@@ -132,6 +132,8 @@ const createVectorGradient = (
 const createConicGradientImage = (
   colors: string[],
   rotation: number,
+  centerX: number,
+  centerY: number,
 ): null | string => {
   if (typeof document === 'undefined') return null
 
@@ -144,13 +146,13 @@ const createConicGradientImage = (
     return null
   }
 
-  const halfSize = CONIC_GRADIENT_SIZE / 2
+  const scale = CONIC_GRADIENT_SIZE / VIEW_BOX_SIZE
   // CSS conic gradients start at 12 o'clock, while the canvas API starts at
   // 3 o'clock, so the angle needs a -90deg adjustment.
   const gradient = context.createConicGradient(
     ((rotation - 90) * Math.PI) / 180,
-    halfSize,
-    halfSize,
+    centerX * scale,
+    centerY * scale,
   )
 
   colors.forEach((color, index) => {
@@ -175,7 +177,7 @@ const createFill = async (
   gradient: Gradient,
   rotation: number,
   clipMarkup: string,
-  box?: { height: number; width: number },
+  box?: FillBox,
 ): Promise<FillResult> => {
   if (colors.length <= 1) {
     return {
@@ -194,7 +196,9 @@ const createFill = async (
     }
   }
 
-  const image = createConicGradientImage(values, rotation)
+  const centerX = box ? box.x + box.width / 2 : VIEW_BOX_SIZE / 2
+  const centerY = box ? box.y + box.height / 2 : VIEW_BOX_SIZE / 2
+  const image = createConicGradientImage(values, rotation, centerX, centerY)
 
   // Conic gradients are not part of SVG. Rasterize the gradient and clip it to
   // the shape instead, while still keeping the rest of the icon as vectors.
@@ -363,17 +367,18 @@ const getContentTransform = (
   perspective: [boolean, number, number],
   rotation: number,
   offset: [number, number],
-  center: number,
+  centerX: number,
+  centerY: number,
 ) => {
   const [enabled, rotateX, rotateY] = perspective
 
   if (!enabled) {
-    return `transform="rotate(${formatNumber(rotation)} ${formatNumber(center)} ${formatNumber(center)}) translate(${formatNumber(offset[0])} ${formatNumber(offset[1])})"`
+    return `transform="rotate(${formatNumber(rotation)} ${formatNumber(centerX)} ${formatNumber(centerY)}) translate(${formatNumber(offset[0])} ${formatNumber(offset[1])})"`
   }
 
   // SVG has no native 3D transform, but CSS transforms are supported on SVG
   // elements by browsers. Keep the same values as the live preview.
-  return `style="perspective: 500px; transform: rotateX(${formatNumber(rotateX)}deg) rotateY(${formatNumber(rotateY)}deg) rotate(${formatNumber(rotation)}deg) translate(${formatNumber(offset[0])}px, ${formatNumber(offset[1])}px); transform-box: view-box; transform-origin: ${formatNumber(center)}px ${formatNumber(center)}px; transform-style: preserve-3d;"`
+  return `style="perspective: 500px; transform: rotateX(${formatNumber(rotateX)}deg) rotateY(${formatNumber(rotateY)}deg) rotate(${formatNumber(rotation)}deg) translate(${formatNumber(offset[0])}px, ${formatNumber(offset[1])}px); transform-box: view-box; transform-origin: ${formatNumber(centerX)}px ${formatNumber(centerY)}px; transform-style: preserve-3d;"`
 }
 
 const TEXT_LINE_HEIGHT = 1.5
@@ -441,7 +446,8 @@ const sanitizeSvgElement = (element: Element) => {
 const createUploadedSvgMarkup = (
   content: string,
   size: number,
-  center: number,
+  centerX: number,
+  centerY: number,
 ) => {
   if (typeof DOMParser === 'undefined') return ''
 
@@ -470,8 +476,8 @@ const createUploadedSvgMarkup = (
   svg.setAttribute('height', formatNumber(size))
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
   svg.setAttribute('width', formatNumber(size))
-  svg.setAttribute('x', formatNumber(center - size / 2))
-  svg.setAttribute('y', formatNumber(center - size / 2))
+  svg.setAttribute('x', formatNumber(centerX - size / 2))
+  svg.setAttribute('y', formatNumber(centerY - size / 2))
 
   return new XMLSerializer().serializeToString(svg)
 }
@@ -479,16 +485,17 @@ const createUploadedSvgMarkup = (
 const createUploadMarkup = (
   content: string | undefined,
   size: number,
-  center: number,
+  centerX: number,
+  centerY: number,
 ) => {
   const trimmedContent = content?.trim()
   if (!trimmedContent) return ''
 
   if (trimmedContent.startsWith('<')) {
-    return createUploadedSvgMarkup(trimmedContent, size, center)
+    return createUploadedSvgMarkup(trimmedContent, size, centerX, centerY)
   }
 
-  return `<image height="${formatNumber(size)}" href="${escapeXml(trimmedContent)}" preserveAspectRatio="xMidYMid meet" width="${formatNumber(size)}" x="${formatNumber(center - size / 2)}" y="${formatNumber(center - size / 2)}"/>`
+  return `<image height="${formatNumber(size)}" href="${escapeXml(trimmedContent)}" preserveAspectRatio="xMidYMid meet" width="${formatNumber(size)}" x="${formatNumber(centerX - size / 2)}" y="${formatNumber(centerY - size / 2)}"/>`
 }
 
 export const createIconSvg = async (
@@ -502,17 +509,24 @@ export const createIconSvg = async (
       ? Math.round(imageSize)
       : DEFAULT_IMAGE_SIZE
 
-  const padding = styles.padding ? PREVIEW_ICON_PADDING : 0
-  const bodySize = VIEW_BOX_SIZE - padding * 2
-  const valueScale = (VIEW_BOX_SIZE - padding) / LIST_ICON_SIZE
-  const center = VIEW_BOX_SIZE / 2
+  const [paddingTop, paddingRight, paddingBottom, paddingLeft] =
+    getIconPaddingValues(styles.padding, styles.paddingSize)
 
-  const outerX = padding
-  const outerY = padding
+  const averagePadding =
+    (paddingTop + paddingRight + paddingBottom + paddingLeft) / 4
+  const bodyX = paddingLeft
+  const bodyY = paddingTop
+  const bodyWidth = Math.max(0, VIEW_BOX_SIZE - paddingLeft - paddingRight)
+  const bodyHeight = Math.max(0, VIEW_BOX_SIZE - paddingTop - paddingBottom)
+  const valueScale = (VIEW_BOX_SIZE - averagePadding) / LIST_ICON_SIZE
+  const centerX = bodyX + bodyWidth / 2
+  const centerY = bodyY + bodyHeight / 2
+
   const borderWidth = styles.borderWidth * valueScale
-  const innerX = outerX + borderWidth
-  const innerY = outerY + borderWidth
-  const innerSize = Math.max(0, bodySize - borderWidth * 2)
+  const innerX = bodyX + borderWidth
+  const innerY = bodyY + borderWidth
+  const innerWidth = Math.max(0, bodyWidth - borderWidth * 2)
+  const innerHeight = Math.max(0, bodyHeight - borderWidth * 2)
 
   const outerRadii = styles.borderRadius.map(
     (radius) => radius * valueScale,
@@ -522,17 +536,17 @@ export const createIconSvg = async (
   ) as BorderRadius
 
   const outerPath = roundedRectPath(
-    outerX,
-    outerY,
-    bodySize,
-    bodySize,
+    bodyX,
+    bodyY,
+    bodyWidth,
+    bodyHeight,
     outerRadii,
   )
   const innerPath = roundedRectPath(
     innerX,
     innerY,
-    innerSize,
-    innerSize,
+    innerWidth,
+    innerHeight,
     innerRadii,
   )
 
@@ -545,6 +559,7 @@ export const createIconSvg = async (
     styles.borderGradient,
     styles.borderRotation,
     `<path d="${outerPath}"/>`,
+    { height: bodyHeight, width: bodyWidth, x: bodyX, y: bodyY },
   )
   const backgroundFill = await createFill(
     `${uid}-background`,
@@ -552,6 +567,7 @@ export const createIconSvg = async (
     styles.backgroundGradient,
     styles.backgroundRotation,
     `<path d="${innerPath}"/>`,
+    { height: innerHeight, width: innerWidth, x: innerX, y: innerY },
   )
 
   defs.push(borderFill.defs, backgroundFill.defs)
@@ -582,15 +598,16 @@ export const createIconSvg = async (
     const [x, y, blur, spread, color] = scaleShadow(shadow, valueScale)
     const holeX = innerX + x + spread
     const holeY = innerY + y + spread
-    const holeSize = Math.max(0, innerSize - spread * 2)
+    const holeWidth = Math.max(0, innerWidth - spread * 2)
+    const holeHeight = Math.max(0, innerHeight - spread * 2)
     const holeRadii = innerRadii.map((radius) =>
       Math.max(0, radius - spread),
     ) as BorderRadius
     const holePath = roundedRectPath(
       holeX,
       holeY,
-      holeSize,
-      holeSize,
+      holeWidth,
+      holeHeight,
       holeRadii,
     )
     const shadowPath = `M ${-VIEW_BOX_SIZE} ${-VIEW_BOX_SIZE} H ${VIEW_BOX_SIZE * 2} V ${VIEW_BOX_SIZE * 2} H ${-VIEW_BOX_SIZE} Z ${holePath}`
@@ -618,13 +635,18 @@ export const createIconSvg = async (
 
     if (iconFilter) defs.push(iconFilter)
 
-    const iconMarkup = `<svg height="${formatNumber(iconSize)}" preserveAspectRatio="xMidYMid meet" style="color: ${escapeXml(styles.iconColor)}" viewBox="${escapeXml(builtIcon.attributes.viewBox)}" width="${formatNumber(iconSize)}" x="${formatNumber(center - iconSize / 2)}" y="${formatNumber(center - iconSize / 2)}">${iconBody}</svg>`
+    const iconMarkup = `<svg height="${formatNumber(iconSize)}" preserveAspectRatio="xMidYMid meet" style="color: ${escapeXml(styles.iconColor)}" viewBox="${escapeXml(builtIcon.attributes.viewBox)}" width="${formatNumber(iconSize)}" x="${formatNumber(centerX - iconSize / 2)}" y="${formatNumber(centerY - iconSize / 2)}">${iconBody}</svg>`
 
     body.push(
-      `<g ${getContentTransform(styles.iconPerspective, styles.iconRotation, styles.iconOffset.map((value) => value * valueScale) as [number, number], center)}><g${iconFilter ? ` filter="url(#${uid}-icon-shadow)"` : ''}>${iconMarkup}</g></g>`,
+      `<g ${getContentTransform(styles.iconPerspective, styles.iconRotation, styles.iconOffset.map((value) => value * valueScale) as [number, number], centerX, centerY)}><g${iconFilter ? ` filter="url(#${uid}-icon-shadow)"` : ''}>${iconMarkup}</g></g>`,
     )
   } else if (previewType === 'upload') {
-    const uploadMarkup = createUploadMarkup(uploadContent, iconSize, center)
+    const uploadMarkup = createUploadMarkup(
+      uploadContent,
+      iconSize,
+      centerX,
+      centerY,
+    )
     const uploadFilter = createDropShadowFilter(
       `${uid}-icon-shadow`,
       styles.iconShadow.map((shadow) => scaleShadow(shadow, valueScale)),
@@ -634,7 +656,7 @@ export const createIconSvg = async (
 
     if (uploadMarkup) {
       body.push(
-        `<g ${getContentTransform(styles.iconPerspective, styles.iconRotation, styles.iconOffset.map((value) => value * valueScale) as [number, number], center)}><g${uploadFilter ? ` filter="url(#${uid}-icon-shadow)"` : ''}>${uploadMarkup}</g></g>`,
+        `<g ${getContentTransform(styles.iconPerspective, styles.iconRotation, styles.iconOffset.map((value) => value * valueScale) as [number, number], centerX, centerY)}><g${uploadFilter ? ` filter="url(#${uid}-icon-shadow)"` : ''}>${uploadMarkup}</g></g>`,
       )
     }
   } else {
@@ -645,7 +667,7 @@ export const createIconSvg = async (
         styles,
         fontSize,
       )
-      const textAttributes = `font-family="${escapeXml(styles.textFont)}" font-size="${formatNumber(fontSize)}" font-style="${styles.textItalic ? 'italic' : 'normal'}" font-weight="${escapeXml(styles.textWeight)}" text-anchor="middle" x="${formatNumber(center)}" y="${formatNumber(center + baselineOffset)}"`
+      const textAttributes = `font-family="${escapeXml(styles.textFont)}" font-size="${formatNumber(fontSize)}" font-style="${styles.textItalic ? 'italic' : 'normal'}" font-weight="${escapeXml(styles.textWeight)}" text-anchor="middle" x="${formatNumber(centerX)}" y="${formatNumber(centerY + baselineOffset)}"`
       const strokeAttributes = styles.textStroke
         ? ` paint-order="stroke fill" stroke="${escapeXml(styles.textStrokeColor)}" stroke-width="${formatNumber(styles.textStrokeWidth)}"`
         : ''
@@ -655,7 +677,11 @@ export const createIconSvg = async (
         styles.textGradient,
         styles.textColorRotation,
         `<text ${textAttributes} fill="#000">${escapeXml(text)}</text>`,
-        gradientBox,
+        gradientBox && {
+          ...gradientBox,
+          x: centerX - gradientBox.width / 2,
+          y: centerY - gradientBox.height / 2,
+        },
       )
 
       defs.push(textFill.defs)
@@ -669,7 +695,7 @@ export const createIconSvg = async (
       const textMarkup = `<text ${textAttributes} fill="${textFill.fill}"${strokeAttributes}>${escapeXml(text)}</text>`
 
       body.push(
-        `<g ${getContentTransform(styles.textPerspective, styles.textRotation, styles.textOffset.map((value) => value * valueScale) as [number, number], center)}><g${textShadowFilter ? ` filter="url(#${uid}-text-shadow)"` : ''}>${textMarkup}</g>${textFill.overlay}</g>`,
+        `<g ${getContentTransform(styles.textPerspective, styles.textRotation, styles.textOffset.map((value) => value * valueScale) as [number, number], centerX, centerY)}><g${textShadowFilter ? ` filter="url(#${uid}-text-shadow)"` : ''}>${textMarkup}</g>${textFill.overlay}</g>`,
       )
     }
   }

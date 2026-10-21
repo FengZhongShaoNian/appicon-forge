@@ -3,10 +3,16 @@ import { toPng } from 'html-to-image'
 import { nanoid } from 'nanoid'
 import { twMerge } from 'tailwind-merge'
 
+import { PREVIEW_ICON_PADDING, PREVIEW_ICON_SIZE } from '@/constants/icon-size'
 import { Gradient } from '@/store/constants'
 
 import type { APIv2CollectionResponse } from '@/services/iconify'
-import type { Color, Perspective, Shadow } from '@/store/interface'
+import type {
+  BorderRadius,
+  Color,
+  Perspective,
+  Shadow,
+} from '@/store/interface'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -151,6 +157,40 @@ export const appendPerspectiveStyle = (
 }
 
 export const scaleValue = (value: number, scale: number) => value * scale
+
+export const getIconPaddingValues = (
+  padding: boolean,
+  paddingSize?: BorderRadius | null | number,
+): BorderRadius => {
+  if (!padding) return [0, 0, 0, 0]
+
+  const values: number[] = Array.isArray(paddingSize)
+    ? paddingSize
+    : typeof paddingSize === 'number' && Number.isFinite(paddingSize)
+      ? [paddingSize, paddingSize, paddingSize, paddingSize]
+      : [
+          PREVIEW_ICON_PADDING,
+          PREVIEW_ICON_PADDING,
+          PREVIEW_ICON_PADDING,
+          PREVIEW_ICON_PADDING,
+        ]
+
+  // Leave at least two pixels for the icon body.
+  const max = PREVIEW_ICON_SIZE / 2 - 1
+
+  return [0, 1, 2, 3].map((index) => {
+    const value = values[index]
+    return Math.min(
+      Math.max(
+        0,
+        typeof value === 'number' && Number.isFinite(value)
+          ? value
+          : PREVIEW_ICON_PADDING,
+      ),
+      max,
+    )
+  }) as BorderRadius
+}
 
 export const scaleShadow = (shadow: Shadow, scale: number) => {
   const [x, y, blur, spread, color] = shadow

@@ -14,6 +14,8 @@ import { SettingsContainer } from '@/components/ui/styled'
 import { useStore } from '@/store'
 import { ImageFormat } from '@/store/constants'
 
+import { PaddingField } from '../common/padding-field'
+
 export const DownloadSettings = () => {
   const [{ imageFormat, imageSize }, setComponentsState] = useStore(
     (store) => store.componentsState,
@@ -75,6 +77,7 @@ export const DownloadSettings = () => {
           }
         />
       </div>
+      {padding && <PaddingField />}
     </SettingsContainer>
   )
 }

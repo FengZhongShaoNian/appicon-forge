@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { IconCard } from '@/components/icon-card'
 import { useIconDownload } from '@/lib/use-icon-download'
 
+import { CompareIconButton } from '../compare-icon'
 import { DownloadButton } from '../download-button'
 import { Input } from '../ui/input'
 import { Separator } from '../ui/separator'
@@ -63,16 +64,22 @@ export const PreviewUpload = () => {
         type='file'
         onChange={handleFileUpload}
       />
-      <DownloadButton
-        onClick={() => {
-          void downloadIcon({
-            element: iconCardRef.current,
-            fileName: 'upload',
-            previewType: 'upload',
-            uploadContent: uploadedContent,
-          })
-        }}
-      />
+      <div className='flex flex-wrap justify-center gap-2'>
+        <DownloadButton
+          onClick={() => {
+            void downloadIcon({
+              element: iconCardRef.current,
+              fileName: 'upload',
+              previewType: 'upload',
+              uploadContent: uploadedContent,
+            })
+          }}
+        />
+        <CompareIconButton
+          previewType='upload'
+          uploadContent={uploadedContent}
+        />
+      </div>
     </PreviewContainer>
   )
 }

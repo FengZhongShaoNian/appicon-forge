@@ -1,8 +1,9 @@
+import { PREVIEW_ICON_PADDING } from '@/constants/icon-size'
 import { createColor, createShadow } from '@/lib/utils'
 
 import { Gradient } from './constants'
 
-import type { Styles } from './interface'
+import type { BorderRadius, Styles } from './interface'
 
 export const defaultBackgroundColor = '#F5F5F5'
 export const defaultBorderColor = '#D1D1D1'
@@ -11,6 +12,13 @@ export const defaultShadowColor = 'rgba(0, 0, 0, 0.1)'
 export const defaultIconColor = '#333'
 export const defaultTextFont = 'sans-serif'
 export const defaultTextShadowAndIconShadowColor = 'rgba(0, 0, 0, 0.5)'
+
+const defaultPaddingSize: BorderRadius = [
+  PREVIEW_ICON_PADDING,
+  PREVIEW_ICON_PADDING,
+  PREVIEW_ICON_PADDING,
+  PREVIEW_ICON_PADDING,
+]
 
 export const defaultStyles: Styles = {
   backgroundColors: [createColor(defaultBackgroundColor)],
@@ -29,6 +37,7 @@ export const defaultStyles: Styles = {
   iconSize: 128,
   insetShadows: [createShadow(defaultShadowColor)],
   padding: true,
+  paddingSize: defaultPaddingSize,
   shadows: [createShadow(defaultShadowColor)],
   textColorRotation: 0,
   textColors: [createColor(defaultTextColor)],

@@ -9,6 +9,7 @@ export const useComponentsState = () => {
     imageFormat: ImageFormat.Png,
     imageSize: 1024,
     isSeparateBorderRadius: false,
+    isSeparatePadding: false,
     previewIcon: null,
     searchQuery: '',
     selectedCollection: null,

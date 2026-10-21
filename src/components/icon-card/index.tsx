@@ -3,17 +3,14 @@ import { forwardRef } from 'react'
 import { Icon } from '@iconify/react'
 import { motion } from 'motion/react'
 
-import {
-  LIST_ICON_SIZE,
-  PREVIEW_ICON_PADDING,
-  PREVIEW_ICON_SIZE,
-} from '@/constants/icon-size'
+import { LIST_ICON_SIZE, PREVIEW_ICON_SIZE } from '@/constants/icon-size'
 import {
   appendPerspectiveStyle,
   cn,
   colorToGradient,
   getBorderRadiusCSS,
   getDropShadowCSS,
+  getIconPaddingValues,
   getShadowCSS,
   getTextShadowCSS,
   scaleShadow,
@@ -62,6 +59,7 @@ export const IconCard = forwardRef<HTMLDivElement, IconCardProps>(
       iconSize,
       insetShadows,
       padding,
+      paddingSize,
       shadows,
       textColorRotation,
       textColors,
@@ -80,12 +78,16 @@ export const IconCard = forwardRef<HTMLDivElement, IconCardProps>(
       textWeight,
     } = styles
 
-    const paddingValue = inPreview && padding ? PREVIEW_ICON_PADDING : 0
+    const paddingValues = inPreview
+      ? getIconPaddingValues(padding, paddingSize)
+      : ([0, 0, 0, 0] as BorderRadius)
+    const [paddingTop, paddingRight, paddingBottom, paddingLeft] = paddingValues
+    const averagePadding =
+      paddingValues.reduce((total, value) => total + value, 0) /
+      paddingValues.length
     const sizeValue = inPreview ? PREVIEW_ICON_SIZE : LIST_ICON_SIZE
     const valueScale = inPreview
-      ? padding
-        ? (PREVIEW_ICON_SIZE - PREVIEW_ICON_PADDING) / LIST_ICON_SIZE
-        : PREVIEW_ICON_SIZE / LIST_ICON_SIZE
+      ? (PREVIEW_ICON_SIZE - averagePadding) / LIST_ICON_SIZE
       : 1
 
     const shadowCSS = getShadowCSS(
@@ -177,7 +179,14 @@ export const IconCard = forwardRef<HTMLDivElement, IconCardProps>(
         ref={ref}
         className='shrink-0'
         layoutId={icon?.name}
-        style={{ height: sizeValue, padding: paddingValue, width: sizeValue }}
+        style={{
+          height: sizeValue,
+          paddingBottom,
+          paddingLeft,
+          paddingRight,
+          paddingTop,
+          width: sizeValue,
+        }}
       >
         <div
           className={cn('size-full select-none', className)}

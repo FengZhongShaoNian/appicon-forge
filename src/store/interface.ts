@@ -38,8 +38,9 @@ export interface Styles {
   iconSize: number
   // Inset Shadow
   insetShadows: Shadow[]
-  // Padding -> only works in preview
+  // Padding -> only works in preview, ordered top/right/bottom/left
   padding: boolean
+  paddingSize: BorderRadius
   // Shadow
   shadows: Shadow[]
   // Text
@@ -75,6 +76,7 @@ export interface ComponentsState {
   // Image Size -> only works in preview
   imageSize: number
   isSeparateBorderRadius: boolean
+  isSeparatePadding: boolean
   previewIcon: null | PreviewIcon
   searchQuery: string
   selectedCollection: IconCollectionWithPrefix | null

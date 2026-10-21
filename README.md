@@ -14,12 +14,13 @@ A simple tool that allows you to generate usable app icons without any design ex
 
 ## Features
 
-- Customize icon size, position, color, background color, border, gradient, and shadow.
+- Customize icon size, position, color, background color, border, per-side padding, gradient, and shadow.
 - Customize text content, text gradient, and fonts.
 - Customize local SVG files or images.
 - Generate icons using [Iconify Icons](https://iconify.design/) with over 200,000 available icons.
 - Real-time preview of your icon changes.
 - Export icons as PNG or SVG. SVG exports keep shapes and gradients as vectors.
+- Compare the current icon with an existing SVG, measure padding and corner-radius differences, and apply the reference values.
 
 > [!IMPORTANT]
 > The text icons use the system's default fonts, and copyright compliance cannot be guaranteed. Please proceed with caution when making your selection.
